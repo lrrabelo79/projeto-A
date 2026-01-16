@@ -211,7 +211,7 @@ function pointerDown(e, side){
 
   isDragging = true;
   dragSide = side;
-  startX = e.clientX;
+  startX = getClientX(e);
 
   // capa
   if (!isOpen && side === "next"){
@@ -233,7 +233,7 @@ function pointerDown(e, side){
 
 function pointerMove(e){
   if (!isDragging || !dragLeaf) return;
-  const dx = e.clientX - startX;
+  const dx = getClientX(e) - startX;
   const deg = angleFromDrag(dx, dragSide);
   setInstantTransform(dragLeaf, deg);
 }
@@ -241,7 +241,7 @@ function pointerMove(e){
 function pointerUp(e){
   if (!isDragging || !dragLeaf) return;
 
-  const dx = e.clientX - startX;
+  const dx = getClientX(e) - startX;
   const halfW = bookEl.getBoundingClientRect().width * 0.5;
   const threshold = halfW * 0.25;
 
@@ -290,11 +290,32 @@ function pointerUp(e){
     dragLeaf = null; isDragging = false; dragSide = null;
   }, 220);
 }
+function cancelDrag(){
+  if (!dragLeaf) return;
+  dragLeaf.style.transition = "";
+  dragLeaf.style.transform = "";
+  setTurning(dragLeaf, false);
+  dragLeaf = null;
+  isDragging = false;
+  dragSide = null;
+}
+
+window.addEventListener("pointercancel", cancelDrag);
+window.addEventListener("touchcancel", cancelDrag);
+window.addEventListener("blur", cancelDrag);
 
 nextZone.addEventListener("pointerdown", (e) => pointerDown(e, "next"));
 prevZone.addEventListener("pointerdown", (e) => pointerDown(e, "prev"));
 window.addEventListener("pointermove", pointerMove);
 window.addEventListener("pointerup", pointerUp);
+
+// ✅ Touch fallback (iOS)
+nextZone.addEventListener("touchstart", (e) => { e.preventDefault(); pointerDown(e, "next"); }, { passive:false });
+prevZone.addEventListener("touchstart", (e) => { e.preventDefault(); pointerDown(e, "prev"); }, { passive:false });
+
+window.addEventListener("touchmove", (e) => { if(isDragging){ e.preventDefault(); pointerMove(e); } }, { passive:false });
+window.addEventListener("touchend", (e) => { if(isDragging){ e.preventDefault(); pointerUp(e); } }, { passive:false });
+
 
 // Teclado
 window.addEventListener("keydown", (e) => {
@@ -315,5 +336,11 @@ window.addEventListener("resize", () => {
 window.addEventListener("orientationchange", () => {
   setTimeout(refreshLayout, 250);
 });
+
+function getClientX(e){
+  if (e.touches && e.touches[0]) return e.touches[0].clientX;
+  if (e.changedTouches && e.changedTouches[0]) return e.changedTouches[0].clientX;
+  return e.clientX;
+}
 
 updateFixedPages();
