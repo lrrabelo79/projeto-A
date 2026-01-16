@@ -18,7 +18,7 @@
   --h2: clamp(18px, 2.2vw, 26px);
   --p:  clamp(14px, 1.8vw, 16px);
 
-  --imgMaxH: clamp(220px, 45vh, 520px);
+  --imgMaxH: clamp(220px, 48vh, 560px);
 }
 
 *{ box-sizing:border-box; }
@@ -31,6 +31,7 @@ body{
   align-items:center;
   justify-content:center;
 
+  /* ✅ safe-area p/ iPhone notch */
   padding: max(12px, env(safe-area-inset-top))
            max(12px, env(safe-area-inset-right))
            max(12px, env(safe-area-inset-bottom))
@@ -40,16 +41,33 @@ body{
   color: var(--ink);
   background: radial-gradient(1200px 700px at 50% 25%, #2c2f36, #14161a);
 
-  overflow:auto;                 /* ✅ não corta no Safari */
+  overflow:auto; /* ✅ não corta no Safari */
   overscroll-behavior: contain;
 }
 
+/* container */
 .wrap{
   width: var(--book-w);
   max-width: 100%;
   position:relative;
 }
 
+/* hint */
+.hint{
+  position:absolute;
+  top:-34px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#cbd1da;
+  font-size:13px;
+  opacity:.9;
+  user-select:none;
+  text-align:center;
+  pointer-events:none;
+  white-space:nowrap;
+}
+
+/* BOOK */
 .book{
   position:relative;
   width:100%;
@@ -58,20 +76,194 @@ body{
   filter: drop-shadow(var(--shadow));
   border-radius: var(--radius);
   touch-action: pan-y;
-  overflow:hidden;               /* corta vazamentos das folhas */
+  overflow:hidden;            /* ✅ remove “vazamentos” (faixa branca) */
 }
 
-.spread{ overflow:hidden; }
+.base{
+  position:absolute;
+  inset:0;
+  border-radius: var(--radius);
+  overflow:hidden;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.20), rgba(0,0,0,0) 9%, rgba(0,0,0,0) 91%, rgba(0,0,0,.16)),
+    linear-gradient(#f6f2ea, #f2eee6);
+  z-index: 0;
+}
 
+.spine{
+  position:absolute;
+  top:0; bottom:0;
+  left:50%;
+  width:2px;
+  transform: translateX(-1px);
+  background: rgba(0,0,0,.14);
+  box-shadow: 0 0 22px rgba(0,0,0,.22);
+  pointer-events:none;
+  z-index: 6;
+}
+
+.book.closed .spread{ opacity:0; pointer-events:none; }
+.book.open   .spread{ opacity:1; pointer-events:auto; }
+
+.spread{
+  position:absolute;
+  inset:0;
+  transition: opacity 250ms ease;
+  z-index: 2;
+  overflow:hidden; /* ✅ */
+}
+
+.fixed-page{
+  position:absolute;
+  top:0; bottom:0;
+  width:50%;
+  background:
+    radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,.9), rgba(255,255,255,0)),
+    linear-gradient(var(--page), #fbf5ea);
+  border: 1px solid rgba(0,0,0,.06);
+}
+.fixed-left{
+  left:0;
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+  border-left: 0; /* opcional: tira borda externa */
+}
+.fixed-right{
+  left:50%;
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+/* CAPA */
+.cover{
+  position:absolute;
+  inset:0;
+  border-radius: var(--radius);
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 950ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+  z-index: 30;
+}
+.cover .front,
+.cover .back{
+  position:absolute;
+  inset:0;
+  border-radius: var(--radius);
+  overflow:hidden;
+  backface-visibility:hidden;
+  border: 1px solid rgba(0,0,0,.12);
+}
+.cover .front{
+  background:
+    radial-gradient(900px 500px at 30% 20%, rgba(255,255,255,.10), rgba(255,255,255,0)),
+    linear-gradient(135deg, #1f232b, #0f1116);
+  color:#f1f1f1;
+  display:grid;
+  place-items:center;
+  padding:48px;
+  text-align:center;
+}
+.cover-title{ max-width:740px; display:grid; gap:12px; }
+.cover-title h1{ margin:0; font-size:44px; letter-spacing:.5px; }
+.cover-title .sub{ margin:0; font-size:16px; opacity:.9; line-height:1.4; }
+.badge{
+  margin: 14px auto 0;
+  display:inline-block;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.06);
+  font-size: 13px;
+}
+.cover .back{
+  transform: rotateY(180deg);
+  background:
+    radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,.88), rgba(255,255,255,0)),
+    linear-gradient(var(--page), #fbf5ea);
+}
+.book.open .cover{ transform: rotateY(-180deg); }
+
+/* FOLHAS */
+.leaf{
+  position:absolute;
+  top:0; bottom:0;
+  left:50%;
+  width:50%;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 900ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+.leaf .front,
+.leaf .back{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  backface-visibility:hidden;
+  border: 1px solid rgba(0,0,0,.06);
+  background:
+    radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,.9), rgba(255,255,255,0)),
+    linear-gradient(var(--page), #fbf5ea);
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+.leaf .back{
+  transform: rotateY(180deg);
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  background:
+    radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,.88), rgba(255,255,255,0)),
+    linear-gradient(var(--page), #fbf5ea);
+}
+.leaf::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:0;
+  transition: opacity 200ms ease;
+  background: linear-gradient(90deg, rgba(0,0,0,0) 45%, var(--paper-shadow) 92%);
+  mix-blend-mode: multiply;
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+.leaf.turning::after{ opacity:1; }
+
+.leaf.flipped{
+  transform: rotateY(-180deg);
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* CONTEÚDO */
 .content{
+  position:absolute;
   inset: var(--padY) var(--padX);
+  display:grid;
+  grid-template-rows:auto auto 1fr auto;
+  gap: 14px;
+}
+h2{ margin:0; font-size: var(--h2); letter-spacing:.2px; }
+p{ margin:0; font-size: var(--p); line-height:1.6; color:#2a2a2a; }
+
+.footer{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#6c6c6c;
+  user-select:none;
 }
 
-h2{ font-size: var(--h2); }
-p{ font-size: var(--p); }
-
-/* imagem responsiva */
+/* IMAGENS */
 .media{
+  margin-top: 10px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -86,17 +278,68 @@ p{ font-size: var(--p); }
   object-fit: contain;
   display:block;
   border:0;
-  box-shadow:none;
   border-radius: 12px;
+  box-shadow: none; /* sem borda/quadro */
+}
+.caption{
+  font-size: 12px;
+  color:#6c6c6c;
 }
 
-/* ✅ EXTRA: em celular em pé, dá mais espaço */
+/* HOTSPOTS */
+.hotspot{
+  position:absolute;
+  top:0; bottom:0;
+  width:28%;
+  z-index: 60;
+  user-select:none;
+}
+.hotspot.left{
+  left:0;
+  cursor: w-resize;
+  background: linear-gradient(90deg, var(--edge-glow), rgba(255,255,255,0));
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+}
+.hotspot.right{
+  right:0;
+  cursor: e-resize;
+  background: linear-gradient(270deg, var(--edge-glow), rgba(255,255,255,0));
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+.corner{
+  position:absolute;
+  bottom: 14px;
+  width: 92px;
+  height: 92px;
+  pointer-events:none;
+  opacity:.85;
+  filter: drop-shadow(0 10px 16px rgba(0,0,0,.18));
+  z-index: 65;
+}
+.corner.right{
+  right: 14px;
+  background: conic-gradient(from 45deg, rgba(255,255,255,0) 0 25%, rgba(0,0,0,.10) 25% 40%, rgba(255,255,255,.0) 40% 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  border-top-right-radius: 18px;
+}
+.corner.left{
+  left: 14px;
+  background: conic-gradient(from 225deg, rgba(255,255,255,0) 0 25%, rgba(0,0,0,.10) 25% 40%, rgba(255,255,255,.0) 40% 100%);
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  border-bottom-left-radius: 18px;
+}
+
+/* ✅ EXTRA: mais espaço em celular em pé */
 @media (max-width: 900px) and (orientation: portrait){
   :root{ --book-h: calc(100dvh - 140px); }
+  .hint{ white-space:normal; top:-46px; }
 }
 
-/* (opcional) em landscape no celular */
-@media (max-width: 900px) and (orientation: landscape){
-  :root{ --book-h: calc(100dvh - 120px); }
+/* opcional */
+@media (max-width: 700px){
+  .corner{ display:none; }
+  .cover-title h1{ font-size: 34px; }
 }
-
