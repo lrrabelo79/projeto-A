@@ -1,1 +1,102 @@
+:root{
+  --radius: 14px;
+
+  /* ✅ encaixa em qualquer tela */
+  --book-w: min(980px, calc(100vw - 24px));
+  --book-h: min(600px, calc(100dvh - 120px));
+
+  --page: #fffdf6;
+  --ink: #1f1f1f;
+
+  --shadow: 0 22px 60px rgba(0,0,0,.28);
+  --paper-shadow: rgba(0,0,0,.22);
+  --edge-glow: rgba(255,255,255,.08);
+
+  --padX: clamp(16px, 3vw, 44px);
+  --padY: clamp(16px, 3vh, 42px);
+
+  --h2: clamp(18px, 2.2vw, 26px);
+  --p:  clamp(14px, 1.8vw, 16px);
+
+  --imgMaxH: clamp(220px, 45vh, 520px);
+}
+
+*{ box-sizing:border-box; }
+html, body { height: 100%; }
+
+body{
+  margin:0;
+  min-height:100svh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding: max(12px, env(safe-area-inset-top))
+           max(12px, env(safe-area-inset-right))
+           max(12px, env(safe-area-inset-bottom))
+           max(12px, env(safe-area-inset-left));
+
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--ink);
+  background: radial-gradient(1200px 700px at 50% 25%, #2c2f36, #14161a);
+
+  overflow:auto;                 /* ✅ não corta no Safari */
+  overscroll-behavior: contain;
+}
+
+.wrap{
+  width: var(--book-w);
+  max-width: 100%;
+  position:relative;
+}
+
+.book{
+  position:relative;
+  width:100%;
+  height: var(--book-h);
+  perspective: 2200px;
+  filter: drop-shadow(var(--shadow));
+  border-radius: var(--radius);
+  touch-action: pan-y;
+  overflow:hidden;               /* corta vazamentos das folhas */
+}
+
+.spread{ overflow:hidden; }
+
+.content{
+  inset: var(--padY) var(--padX);
+}
+
+h2{ font-size: var(--h2); }
+p{ font-size: var(--p); }
+
+/* imagem responsiva */
+.media{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height: clamp(180px, 28vh, 420px);
+}
+.media img{
+  max-width: 100%;
+  max-height: var(--imgMaxH);
+  width:auto;
+  height:auto;
+  object-fit: contain;
+  display:block;
+  border:0;
+  box-shadow:none;
+  border-radius: 12px;
+}
+
+/* ✅ EXTRA: em celular em pé, dá mais espaço */
+@media (max-width: 900px) and (orientation: portrait){
+  :root{ --book-h: calc(100dvh - 140px); }
+}
+
+/* (opcional) em landscape no celular */
+@media (max-width: 900px) and (orientation: landscape){
+  :root{ --book-h: calc(100dvh - 120px); }
+}
 
