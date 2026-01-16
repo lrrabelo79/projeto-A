@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Livro (Capa → Abre/Fecha) • Numeração Correta • Sem Pular</title>
+
+  <style>
+    :root{
+      --book-w: 980px;
+      --book-h: 600px;
+      --radius: 14px;
+
+      --page: #fffdf6;
+      --ink: #1f1f1f;
+
+      --shadow: 0 22px 60px rgba(0,0,0,.28);
+      --paper-shadow: rgba(0,0,0,.22);
+      --edge-glow: rgba(255,255,255,.08);
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(1200px 700px at 50% 25%, #2c2f36, #14161a);
+      overflow:hidden;
+    }
+
+    .wrap{ width:min(96vw, var(--book-w)); position:relative; }
+
+    .hint{
+      position:absolute;
+      top:-36px;
+      left:50%;
+      transform:translateX(-50%);
+      color:#cbd1da;
+      font-size:13px;
+      opacity:.9;
+      user-select:none;
+      text-align:center;
+      pointer-events:none;
+      white-space:nowrap;
+    }
+
+    .book{
+      position:relative;
+      width:100%;
+      height:min(82vh, var(--book-h));
+      perspective: 2200px;
+      filter: drop-shadow(var(--shadow));
+      border-radius: var(--radius);
+      touch-action: pan-y;
+      overflow:hidden; /* importante pra não "vazar" folhas */
+    }
+
+    .base{
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      overflow:hidden;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.20), rgba(0,0,0,0) 9%, rgba(0,0,0,0) 91%, rgba(0,0,0,.16)),
+        linear-gradient(#f6f2ea, #f2eee6);
+      z-index: 0;
+    }
+
+    .spine{
+      position:absolute;
+      top:0; bottom:0;
+      left:50%;
+      width:2px;
+      transform: translateX(-1px);
+      background: rgba(0,0,0,.14);
+      box-shadow: 0 0 22px rgba(0,0,0,.22);
+      pointer-events:none;
+      z-index: 6;
+    }
+
+    /* Estados */
+    .book.closed .spread{ opacity:0; pointer-events:none; }
+    .book.open   .spread{ opacity:1; pointer-events:auto; }
+
+    .spread{
+      position:absolute;
+      inset:0;
+      transition: opacity 250ms ease;
+      z-index: 2;
+      overflow:hidden;
+    }
+
+    .fixed-page{
+      position:absolute;
+      top:0; bottom:0;
+      width:50%;
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,.9), rgba(255,255,255,0)),
+        linear-gradient(var(--page), #fbf5ea);
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .fixed-left{
+      left:0;
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+      border-left:0;
+    }
+    .fixed-right{
+      left:50%;
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    /* CAPA 100% */
+    .cover{
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      transform-style: preserve-3d;
+      transform-origin: left center;
+      transition: transform 950ms cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+      z-index: 30;
+    }
+    .cover .front,
+    .cover .back{
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      overflow:hidden;
+      backface-visibility:hidden;
+      border: 1px solid rgba(0,0,0,.12);
+    }
+    .cover .front{
+      background:
+        radial-gradient(900px 500px at 30% 20%, rgba(255,255,255,.10), rgba(255,255,255,0)),
+        linear-gradient(135deg, #1f232b, #0f1116);
+      color:#f1f1f1;
+      display:grid;
+      place-items:center;
+      padding:48px;
+      text-align:center;
+    }
+    .cover-title{ max-width:740px; display:grid; gap:12px; }
+    .cover-title h1{ margin:0; font-size:44px; letter-spacing:.5px; }
+    .cover-title .sub{ margin:0; font-size:16px; opacity:.9; line-height:1.4; }
+    .badge{
+      margin: 14px auto 0;
+      display:inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.06);
+      font-size: 13px;
+    }
+    .cover .back{
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,.88), rgba(255,255,255,0)),
+        linear-gradient(var(--page), #fbf5ea);
+    }
+    .book.open .cover{ transform: rotateY(-180deg); }
+
+    /* FOLHAS (50% width) */
+    .leaf{
+      position:absolute;
+      top:0; bottom:0;
+      left:50%;
+      width:50%;
+      transform-style: preserve-3d;
+      transform-origin: left center;
+      transition: transform 900ms cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    .leaf .front,
+    .leaf .back{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      backface-visibility:hidden;
+      border: 1px solid rgba(0,0,0,.06);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,.9), rgba(255,255,255,0)),
+        linear-gradient(var(--page), #fbf5ea);
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    .leaf .back{
+      transform: rotateY(180deg);
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      background:
+        radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,.88), rgba(255,255,255,0)),
+        linear-gradient(var(--page), #fbf5ea);
+    }
+
+    .leaf::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity 200ms ease;
+      background: linear-gradient(90deg, rgba(0,0,0,0) 45%, var(--paper-shadow) 92%);
+      mix-blend-mode: multiply;
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+    .leaf.turning::after{ opacity:1; }
+
+    .leaf.flipped{
+      transform: rotateY(-180deg);
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .content{
+      position:absolute;
+      inset: 42px 44px;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      gap: 14px;
+    }
+    h2{ margin:0; font-size:24px; letter-spacing:.2px; }
+    p{ margin:0; font-size:16px; line-height:1.6; color:#2a2a2a; }
+
+    .footer{
+      display:flex;
+      justify-content:space-between;
+      font-size:12px;
+      color:#6c6c6c;
+      user-select:none;
+    }
+
+    /* IMAGENS (centralizadas, sem cortar) */
+    .media{
+      margin: 10px 0 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      min-height: 280px;
+    }
+    .media.full{ min-height: 360px; }
+    .media img{
+      max-width: 100%;
+      max-height: 430px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display:block;
+      border:0;
+      box-shadow:none;
+      border-radius: 12px;
+    }
+    .caption{ font-size:12px; color:#6c6c6c; }
+
+    .hotspot{
+      position:absolute;
+      top:0; bottom:0;
+      width:28%;
+      z-index: 60;
+      user-select:none;
+    }
+    .hotspot.left{
+      left:0;
+      cursor: w-resize;
+      background: linear-gradient(90deg, var(--edge-glow), rgba(255,255,255,0));
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+    }
+    .hotspot.right{
+      right:0;
+      cursor: e-resize;
+      background: linear-gradient(270deg, var(--edge-glow), rgba(255,255,255,0));
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    .corner{
+      position:absolute;
+      bottom: 14px;
+      width: 92px;
+      height: 92px;
+      pointer-events:none;
+      opacity:.85;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.18));
+      z-index: 65;
+    }
+    .corner.right{
+      right: 14px;
+      background: conic-gradient(from 45deg, rgba(255,255,255,0) 0 25%, rgba(0,0,0,.10) 25% 40%, rgba(255,255,255,.0) 40% 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 100%);
+      border-top-right-radius: 18px;
+    }
+    .corner.left{
+      left: 14px;
+      background: conic-gradient(from 225deg, rgba(255,255,255,0) 0 25%, rgba(0,0,0,.10) 25% 40%, rgba(255,255,255,.0) 40% 100%);
+      clip-path: polygon(0 0, 0 100%, 100% 100%);
+      border-bottom-left-radius: 18px;
+    }
+
+    @media (max-width: 700px){
+      .content{ inset: 28px 28px; }
+      h2{ font-size: 20px; }
+      p{ font-size: 15px; }
+      .corner{ width: 70px; height: 70px; }
+      .hint{ white-space:normal; top:-48px; }
+      .cover-title h1{ font-size: 34px; }
+      .media img{ max-height: 320px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="hint">Clique/arraste no canto direito para abrir/avançar • esquerdo para voltar (no começo fecha)</div>
+
+    <div class="book closed" id="book">
+      <div class="base"></div>
+
+      <div class="cover" id="cover">
+        <div class="front">
+          <div class="cover-title">
+            <h1>Bíblia</h1>
+            <p class="sub">Leitura em formato de livro • clique ou arraste para abrir</p>
+            <div class="badge">Toque no canto direito ➜</div>
+          </div>
+        </div>
+        <div class="back"></div>
+      </div>
+
+      <div class="spread" id="spread">
+        <div class="fixed-page fixed-left" id="fixedLeft"></div>
+        <div class="fixed-page fixed-right" id="fixedRight"></div>
+        <div class="spine"></div>
+        <div id="leaves"></div>
+      </div>
+
+      <div class="hotspot left" id="prevZone"></div>
+      <div class="hotspot right" id="nextZone"></div>
+
+      <div class="corner left"></div>
+      <div class="corner right"></div>
+    </div>
+  </div>
+
+  <script>
+    // Páginas (1 direita, 2 esquerda, etc.)
+    const PAGES = [
+      { title:"GÊNESIS 1:1",  img:"GENESIS/G1-1.png", imgFull:true },
+      { title:"GÊNESIS 1:2",  img:"GENESIS/G1-2.png", imgFull:true},
+      { title:"GÊNESIS 1:3",  img:"GENESIS/G1-3.png", imgFull:true},
+	  { title:"GÊNESIS 1:4",  img:"GENESIS/G1-4.png", imgFull:true},
+      { title:"GÊNESIS 1:5",  img:"GENESIS/G1-5.png", imgFull:true},
+      { title:"GÊNESIS 1:6",  img:"GENESIS/G1-6.png", imgFull:true},
+      { title:"GÊNESIS 1:7",  img:"GENESIS/G1-7.png", imgFull:true},
+	  { title:"GÊNESIS 1:8",  img:"GENESIS/G1-8.png", imgFull:true},
+	  { title:"GÊNESIS 1:9",  img:"GENESIS/G1-9.png", imgFull:true},
+    ];
+
+    const bookEl     = document.getElementById("book");
+    const coverEl    = document.getElementById("cover");
+    const fixedLeft  = document.getElementById("fixedLeft");
+    const fixedRight = document.getElementById("fixedRight");
+    const leavesEl   = document.getElementById("leaves");
+    const nextZone   = document.getElementById("nextZone");
+    const prevZone   = document.getElementById("prevZone");
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function pageMarkup(pageObj, pageNumber, side){
+      const footerLeft  = side === "left"  ? `<span>${pageNumber}</span>` : `<span></span>`;
+      const footerRight = side === "right" ? `<span>${pageNumber}</span>` : `<span></span>`;
+
+      const title = escapeHtml(pageObj?.title || "");
+      const text  = escapeHtml(pageObj?.text  || "");
+
+      let media = "";
+      if (pageObj?.img) {
+        const cap = pageObj.caption ? `<div class="caption">${escapeHtml(pageObj.caption)}</div>` : "";
+        media = `
+          <figure class="media ${pageObj.imgFull ? "full" : ""}">
+            <img src="${pageObj.img}" alt="${title}">
+            ${cap}
+          </figure>
+        `;
+      }
+
+      return `
+        <div class="content">
+          <h2>${title}</h2>
+          ${text ? `<p>${text}</p>` : ""}
+          ${media}
+          <div class="footer">${footerLeft}${footerRight}</div>
+        </div>
+      `;
+    }
+
+    // Monta folhas: (ímpar = direita/front) e (par = esquerda/back)
+    const leaves = [];
+    for (let i = 0; i < PAGES.length; i += 2) {
+      leaves.push({
+        odd: PAGES[i],
+        even: PAGES[i+1] || { title:"", text:"" },
+        oddNum: i + 1,
+        evenNum: i + 2
+      });
+    }
+
+    // Render folhas em pilha: a primeira por cima
+    leaves.forEach((lf, idx) => {
+      const z = (leaves.length - idx) + 10; // topo alto
+      const leaf = document.createElement("div");
+      leaf.className = "leaf";
+      leaf.dataset.index = String(idx);
+      leaf.dataset.z = String(z);          // guarda z original
+      leaf.style.zIndex = String(z);
+
+      leaf.innerHTML = `
+        <div class="front">${pageMarkup(lf.odd, lf.oddNum, "right")}</div>
+        <div class="back">${pageMarkup(lf.even, lf.evenNum, "left")}</div>
+      `;
+      leavesEl.appendChild(leaf);
+    });
+
+    const leafEls = Array.from(document.querySelectorAll(".leaf"));
+
+    // ====== ESTADO ======
+    let isOpen = false;
+    let current = 0; // quantas folhas já viraram
+
+    // Drag state
+    let isDragging = false;
+    let dragSide = null; // "next" | "prev"
+    let dragLeaf = null;
+    let startX = 0;
+
+    function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+    function setTurning(el, on){ el?.classList.toggle("turning", !!on); }
+
+    function setInstantTransform(el, deg){
+      el.style.transition = "none";
+      el.style.transform = `rotateY(${deg}deg)`;
+    }
+
+    function sendLeafToBottom(el){
+      const idx = Number(el.dataset.index || 0);
+      el.style.zIndex = String(1 + idx);
+    }
+    function restoreLeafZ(el){
+      el.style.zIndex = el.dataset.z;
+    }
+
+    function updateFixedPages(){
+      const rightLeaf = leaves[current];
+      const leftLeaf  = leaves[current - 1];
+
+      fixedRight.innerHTML = rightLeaf
+        ? pageMarkup(rightLeaf.odd, rightLeaf.oddNum, "right")
+        : "";
+
+      fixedLeft.innerHTML = leftLeaf
+        ? pageMarkup(leftLeaf.even, leftLeaf.evenNum, "left")
+        : "";
+    }
+
+    function canGoNext(){
+      if (!isOpen) return true;            // capa pode abrir
+      return current < leafEls.length;     // folhas restantes
+    }
+
+    // ✅ pode "voltar" sempre que estiver aberto (no começo isso fecha)
+    function canGoPrev(){
+      return isOpen;
+    }
+
+    function openCover(){
+      isOpen = true;
+      bookEl.classList.remove("closed");
+      bookEl.classList.add("open");
+      updateFixedPages();
+    }
+
+    function closeCover(){
+      isOpen = false;
+      current = 0;
+
+      // desfaz todas as folhas
+      leafEls.forEach((el) => {
+        el.classList.remove("flipped");
+        restoreLeafZ(el);
+        el.style.transform = "";
+        el.style.transition = "";
+      });
+
+      bookEl.classList.remove("open");
+      bookEl.classList.add("closed");
+      updateFixedPages();
+    }
+
+    function commitNext(){
+      if (!canGoNext()) return;
+      if (!isOpen){ openCover(); return; }
+
+      const lf = leafEls[current];
+      setTurning(lf, true);
+      lf.classList.add("flipped");
+      sendLeafToBottom(lf);
+      window.setTimeout(() => setTurning(lf, false), 220);
+
+      current++;
+      updateFixedPages();
+    }
+
+    function commitPrev(){
+      if (!canGoPrev()) return;
+
+      // ✅ se está no começo, volta e FECHA
+      if (current === 0){
+        closeCover();
+        return;
+      }
+
+      const lf = leafEls[current - 1];
+      setTurning(lf, true);
+      lf.classList.remove("flipped");
+      restoreLeafZ(lf);
+      window.setTimeout(() => setTurning(lf, false), 220);
+
+      current--;
+      updateFixedPages();
+    }
+
+    // Clique
+    nextZone.addEventListener("click", commitNext);
+    prevZone.addEventListener("click", commitPrev);
+
+    function angleFromDrag(dx, side){
+      const halfW = bookEl.getBoundingClientRect().width * 0.5;
+      const progress = clamp(Math.abs(dx) / (halfW * 0.85), 0, 1);
+      const ang = -180 * progress;
+      return (side === "next") ? ang : (-180 + 180 * progress);
+    }
+
+    function pointerDown(e, side){
+      if (side === "next" && !canGoNext()) return;
+      if (side === "prev" && !canGoPrev()) return;
+
+      isDragging = true;
+      dragSide = side;
+      startX = e.clientX;
+
+      // ✅ CAPA: abrir (quando fechado) ou fechar (quando aberto e current==0)
+      if (side === "next" && !isOpen){
+        dragLeaf = coverEl;
+        setTurning(dragLeaf, true);
+        setInstantTransform(dragLeaf, 0);
+        dragLeaf.setPointerCapture?.(e.pointerId);
+        return;
+      }
+
+      if (side === "prev" && isOpen && current === 0){
+        dragLeaf = coverEl;
+        setTurning(dragLeaf, true);
+        setInstantTransform(dragLeaf, -180); // capa já aberta
+        dragLeaf.setPointerCapture?.(e.pointerId);
+        return;
+      }
+
+      // folhas
+      dragLeaf = (side === "next") ? leafEls[current] : leafEls[current - 1];
+      setTurning(dragLeaf, true);
+
+      const initialDeg = (side === "next") ? 0 : -180;
+      setInstantTransform(dragLeaf, initialDeg);
+
+      dragLeaf.setPointerCapture?.(e.pointerId);
+    }
+
+    function pointerMove(e){
+      if (!isDragging || !dragLeaf) return;
+      const dx = e.clientX - startX;
+      const deg = angleFromDrag(dx, dragSide);
+      setInstantTransform(dragLeaf, deg);
+    }
+
+    function pointerUp(e){
+      if (!isDragging || !dragLeaf) return;
+
+      const dx = e.clientX - startX;
+      const halfW = bookEl.getBoundingClientRect().width * 0.5;
+      const threshold = halfW * 0.25;
+
+      dragLeaf.style.transition = "";
+
+      // ✅ capa (abrir/fechar)
+      if (dragLeaf === coverEl){
+        if (!isOpen) {
+          if (dx < -threshold) openCover();
+        } else {
+          if (dx > threshold) closeCover();
+        }
+
+        dragLeaf.style.transform = "";
+        window.setTimeout(() => {
+          setTurning(dragLeaf, false);
+          dragLeaf = null; isDragging = false; dragSide = null;
+        }, 220);
+        return;
+      }
+
+      // folhas
+      if (dragSide === "next") {
+        if (dx < -threshold) {
+          dragLeaf.style.transform = "";
+          dragLeaf.classList.add("flipped");
+          sendLeafToBottom(dragLeaf);
+          current++;
+          updateFixedPages();
+        } else {
+          dragLeaf.style.transform = "";
+        }
+      } else {
+        if (dx > threshold) {
+          if (current === 0){
+            closeCover();
+          } else {
+            dragLeaf.style.transform = "";
+            dragLeaf.classList.remove("flipped");
+            restoreLeafZ(dragLeaf);
+            current--;
+            updateFixedPages();
+          }
+        } else {
+          dragLeaf.style.transform = "";
+          dragLeaf.classList.add("flipped");
+        }
+      }
+
+      window.setTimeout(() => {
+        setTurning(dragLeaf, false);
+        dragLeaf = null; isDragging = false; dragSide = null;
+      }, 220);
+    }
+
+    nextZone.addEventListener("pointerdown", (e) => pointerDown(e, "next"));
+    prevZone.addEventListener("pointerdown", (e) => pointerDown(e, "prev"));
+    window.addEventListener("pointermove", pointerMove);
+    window.addEventListener("pointerup", pointerUp);
+
+    // Teclado
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") commitNext();
+      if (e.key === "ArrowLeft") commitPrev();
+    });
+
+    updateFixedPages();
+  </script>
+</body>
+</html>
