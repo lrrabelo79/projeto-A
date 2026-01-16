@@ -330,6 +330,92 @@
       .cover-title h1{ font-size: 34px; }
       .media img{ max-height: 320px; }
     }
+	
+	/* ====== RESPONSIVO REAL (gira o celular e adapta) ====== */
+
+/* base: livro sempre cabe na tela */
+:root{
+  --book-w: min(980px, 96vw);
+  --book-h: min(600px, 82vh);
+
+  --padX: clamp(16px, 3vw, 44px);
+  --padY: clamp(16px, 3vh, 42px);
+
+  --h2: clamp(18px, 2.2vw, 26px);
+  --p:  clamp(14px, 1.8vw, 16px);
+
+  --imgMaxH: clamp(220px, 45vh, 520px);
+}
+
+/* garante que o livro sempre corte "vazamentos" */
+.book, .spread{ overflow:hidden; }
+
+/* tipografia/padding responsivos */
+.content{
+  inset: var(--padY) var(--padX);
+}
+h2{ font-size: var(--h2); }
+p{ font-size: var(--p); }
+
+/* imagem sempre se adapta ao espaço */
+.media{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height: clamp(180px, 28vh, 420px);
+}
+.media img{
+  max-width: 100%;
+  max-height: var(--imgMaxH);
+  width:auto;
+  height:auto;
+  object-fit: contain;
+  display:block;
+  border:0;
+  box-shadow:none;
+}
+
+/* ====== CELULAR EM PÉ (portrait): 1 página grande ====== */
+@media (max-width: 900px) and (orientation: portrait){
+  .spine{ display:none; }
+
+  .fixed-left{ display:none; }
+  .fixed-right{
+    left:0;
+    width:100%;
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+  }
+
+  .leaf{
+    left:0;
+    width:100%;
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+  }
+  .leaf .front, .leaf .back{
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+  }
+
+  .hotspot{ width:38%; }
+  .corner{ display:none; } /* opcional: remove cantos pra não atrapalhar */
+}
+
+/* ====== CELULAR DEITADO (landscape): 2 páginas ====== */
+@media (max-width: 900px) and (orientation: landscape){
+  .spine{ display:block; }
+  .fixed-left{ display:block; }
+
+  .fixed-left{ left:0; width:50%; }
+  .fixed-right{ left:50%; width:50%; }
+
+  .leaf{ left:50%; width:50%; }
+  .corner{ display:block; }
+  .hotspot{ width:30%; }
+}
+
   </style>
 </head>
 
