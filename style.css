@@ -343,3 +343,20 @@ p{ margin:0; font-size: var(--p); line-height:1.6; color:#2a2a2a; }
   .corner{ display:none; }
   .cover-title h1{ font-size: 34px; }
 }
+/* ✅ melhora touch no iOS e evita “travadas” */
+.book, .hotspot{
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ✅ no iPhone, deixe o hotspot SEM scroll/zoom interferindo */
+.hotspot{
+  touch-action: none;   /* muito importante */
+}
+
+/* opcional: tira o brilho do hotspot (se incomodar) */
+.hotspot.left,
+.hotspot.right{
+  background: transparent;
+}
