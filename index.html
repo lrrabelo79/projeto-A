@@ -3,33 +3,32 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Livro (Capa → Abre/Fecha) • Numeração Correta • Sem Pular</title>
+  <title>Livro Responsivo • 1 pág (portrait) / 2 págs (landscape)</title>
 
   <style>
     :root{
-	  --radius: 14px;
+      --radius: 14px;
 
-	  /* responsivo: limita entre min e max */
-	  --book-w: min(980px, 96vw);
-	  --book-h: min(600px, 82vh);
+      --page: #fffdf6;
+      --ink: #1f1f1f;
 
-	  --page: #fffdf6;
-	  --ink: #1f1f1f;
+      --shadow: 0 22px 60px rgba(0,0,0,.28);
+      --paper-shadow: rgba(0,0,0,.22);
+      --edge-glow: rgba(255,255,255,.08);
 
-	  --shadow: 0 22px 60px rgba(0,0,0,.28);
-	  --paper-shadow: rgba(0,0,0,.22);
-	  --edge-glow: rgba(255,255,255,.08);
+      /* dimensões responsivas */
+      --book-w: min(980px, 96vw);
+      --book-h: min(600px, 82vh);
 
-	  /* espaçamentos/fonte responsivos */
-	  --padX: clamp(18px, 3vw, 44px);
-	  --padY: clamp(18px, 3vh, 42px);
-	  --h2: clamp(18px, 2.2vw, 24px);
-	  --p: clamp(14px, 1.8vw, 16px);
+      /* tipografia / margens responsivas */
+      --padX: clamp(16px, 3vw, 44px);
+      --padY: clamp(16px, 3vh, 42px);
+      --h2: clamp(18px, 2.2vw, 26px);
+      --p:  clamp(14px, 1.8vw, 16px);
 
-	  /* imagem responsiva */
-	  --imgMaxH: clamp(220px, 45vh, 430px);
-	}
-
+      /* imagem responsiva */
+      --imgMaxH: clamp(220px, 45vh, 520px);
+    }
 
     *{ box-sizing:border-box; }
 
@@ -39,7 +38,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px;
+      padding:18px;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color: var(--ink);
       background: radial-gradient(1200px 700px at 50% 25%, #2c2f36, #14161a);
@@ -50,12 +49,12 @@
 
     .hint{
       position:absolute;
-      top:-36px;
+      top:-34px;
       left:50%;
       transform:translateX(-50%);
       color:#cbd1da;
       font-size:13px;
-      opacity:.9;
+      opacity:.92;
       user-select:none;
       text-align:center;
       pointer-events:none;
@@ -63,10 +62,15 @@
     }
 
     .book{
-	  width: 100%;
-	  height: var(--book-h);
-	  overflow:hidden;
-	}
+      position:relative;
+      width:100%;
+      height: var(--book-h);
+      perspective: 2200px;
+      filter: drop-shadow(var(--shadow));
+      border-radius: var(--radius);
+      touch-action: pan-y;
+      overflow:hidden;
+    }
 
     .base{
       position:absolute;
@@ -106,25 +110,38 @@
     .fixed-page{
       position:absolute;
       top:0; bottom:0;
-      width:50%;
       background:
         radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,.9), rgba(255,255,255,0)),
         linear-gradient(var(--page), #fbf5ea);
       border: 1px solid rgba(0,0,0,.06);
+      overflow:hidden;
     }
-    .fixed-left{
-      left:0;
+
+    /* ===== Spread (2 páginas) padrão ===== */
+    .book.spread-mode .fixed-left{
+      left:0; width:50%;
       border-top-left-radius: var(--radius);
       border-bottom-left-radius: var(--radius);
       border-left:0;
     }
-    .fixed-right{
-      left:50%;
+    .book.spread-mode .fixed-right{
+      left:50%; width:50%;
       border-top-right-radius: var(--radius);
       border-bottom-right-radius: var(--radius);
     }
 
-    /* CAPA 100% */
+    /* ===== Single (1 página) ===== */
+    .book.single-mode .spine{ display:none; }
+    .book.single-mode .fixed-left{ display:none; }
+    .book.single-mode .fixed-right{
+      left:0; width:100%;
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    /* CAPA */
     .cover{
       position:absolute;
       inset:0;
@@ -151,14 +168,14 @@
       color:#f1f1f1;
       display:grid;
       place-items:center;
-      padding:48px;
+      padding: clamp(18px, 4vw, 48px);
       text-align:center;
     }
     .cover-title{ max-width:740px; display:grid; gap:12px; }
-    .cover-title h1{ margin:0; font-size:44px; letter-spacing:.5px; }
-    .cover-title .sub{ margin:0; font-size:16px; opacity:.9; line-height:1.4; }
+    .cover-title h1{ margin:0; font-size: clamp(28px, 5vw, 44px); letter-spacing:.5px; }
+    .cover-title .sub{ margin:0; font-size:14px; opacity:.9; line-height:1.4; }
     .badge{
-      margin: 14px auto 0;
+      margin: 10px auto 0;
       display:inline-block;
       padding: 10px 14px;
       border-radius: 999px;
@@ -174,16 +191,28 @@
     }
     .book.open .cover{ transform: rotateY(-180deg); }
 
-    /* FOLHAS (50% width) */
+    /* ===== FOLHAS (Spread = 50% | Single = 100%) ===== */
     .leaf{
       position:absolute;
       top:0; bottom:0;
-      left:50%;
-      width:50%;
       transform-style: preserve-3d;
       transform-origin: left center;
       transition: transform 900ms cubic-bezier(.2,.8,.2,1);
       will-change: transform;
+    }
+
+    .book.spread-mode .leaf{
+      left:50%;
+      width:50%;
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    .book.single-mode .leaf{
+      left:0;
+      width:100%;
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
       border-top-right-radius: var(--radius);
       border-bottom-right-radius: var(--radius);
     }
@@ -198,21 +227,28 @@
       background:
         radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,.9), rgba(255,255,255,0)),
         linear-gradient(var(--page), #fbf5ea);
+    }
+
+    /* Front/Back border radius por modo */
+    .book.spread-mode .leaf .front,
+    .book.spread-mode .leaf .back{
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    .book.single-mode .leaf .front,
+    .book.single-mode .leaf .back{
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
       border-top-right-radius: var(--radius);
       border-bottom-right-radius: var(--radius);
     }
 
     .leaf .back{
       transform: rotateY(180deg);
-      border-top-left-radius: var(--radius);
-      border-bottom-left-radius: var(--radius);
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-      background:
-        radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,.88), rgba(255,255,255,0)),
-        linear-gradient(var(--page), #fbf5ea);
     }
 
+    /* Sombra no giro */
     .leaf::after{
       content:"";
       position:absolute;
@@ -222,30 +258,22 @@
       transition: opacity 200ms ease;
       background: linear-gradient(90deg, rgba(0,0,0,0) 45%, var(--paper-shadow) 92%);
       mix-blend-mode: multiply;
-      border-top-right-radius: var(--radius);
-      border-bottom-right-radius: var(--radius);
     }
     .leaf.turning::after{ opacity:1; }
 
     .leaf.flipped{
       transform: rotateY(-180deg);
-      border-top-left-radius: var(--radius);
-      border-bottom-left-radius: var(--radius);
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
     }
 
     .content{
-	  position:absolute;
-	  inset: var(--padY) var(--padX);
-	  display:grid;
-	  grid-template-rows:auto auto 1fr auto;
-	  gap: 14px;
-	}
-
-	h2{ margin:0; font-size: var(--h2); }
-	p{ margin:0; font-size: var(--p); line-height:1.6; }
-
+      position:absolute;
+      inset: var(--padY) var(--padX);
+      display:grid;
+      grid-template-rows:auto auto 1fr auto;
+      gap: 12px;
+    }
+    h2{ margin:0; font-size: var(--h2); letter-spacing:.2px; }
+    p{ margin:0; font-size: var(--p); line-height:1.6; color:#2a2a2a; }
 
     .footer{
       display:flex;
@@ -255,31 +283,33 @@
       user-select:none;
     }
 
-    /* IMAGENS (centralizadas, sem cortar) */
+    /* IMAGEM: centralizada, sem borda, sem corte */
     .media{
-	  display:flex;
-	  align-items:center;
-	  justify-content:center;
-	  width:100%;
-	  min-height: clamp(180px, 25vh, 360px);
-	}
-    .media.full{ min-height: 360px; }
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      min-height: clamp(160px, 26vh, 420px);
+      margin-top: 6px;
+    }
     .media img{
-	  max-width: 100%;
-	  max-height: var(--imgMaxH);
-	  width: auto;
-	  height: auto;
-	  object-fit: contain;
-	  display:block;
-	  border:0;
-	  box-shadow:none;
-	  border-radius: 12px;
-	}
+      max-width:100%;
+      max-height: var(--imgMaxH);
+      width:auto;
+      height:auto;
+      object-fit: contain;
+      display:block;
+      border:0;
+      box-shadow:none;
+      border-radius: 12px;
+    }
+    .caption{ font-size:12px; color:#6c6c6c; }
 
+    /* Hotspots */
     .hotspot{
       position:absolute;
       top:0; bottom:0;
-      width:28%;
+      width:30%;
       z-index: 60;
       user-select:none;
     }
@@ -298,6 +328,7 @@
       border-bottom-right-radius: var(--radius);
     }
 
+    /* Cantos (opcional no mobile) */
     .corner{
       position:absolute;
       bottom: 14px;
@@ -321,116 +352,26 @@
       border-bottom-left-radius: 18px;
     }
 
-    @media (max-width: 700px){
-      .content{ inset: 28px 28px; }
-      h2{ font-size: 20px; }
-      p{ font-size: 15px; }
-      .corner{ width: 70px; height: 70px; }
-      .hint{ white-space:normal; top:-48px; }
-      .cover-title h1{ font-size: 34px; }
-      .media img{ max-height: 320px; }
+    @media (max-width: 780px){
+      .hint{ white-space:normal; top:-44px; }
+      .corner{ display:none; }
+      .hotspot{ width:38%; }
     }
-	
-	/* ====== RESPONSIVO REAL (gira o celular e adapta) ====== */
-
-/* base: livro sempre cabe na tela */
-:root{
-  --book-w: min(980px, 96vw);
-  --book-h: min(600px, 82vh);
-
-  --padX: clamp(16px, 3vw, 44px);
-  --padY: clamp(16px, 3vh, 42px);
-
-  --h2: clamp(18px, 2.2vw, 26px);
-  --p:  clamp(14px, 1.8vw, 16px);
-
-  --imgMaxH: clamp(220px, 45vh, 520px);
-}
-
-/* garante que o livro sempre corte "vazamentos" */
-.book, .spread{ overflow:hidden; }
-
-/* tipografia/padding responsivos */
-.content{
-  inset: var(--padY) var(--padX);
-}
-h2{ font-size: var(--h2); }
-p{ font-size: var(--p); }
-
-/* imagem sempre se adapta ao espaço */
-.media{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:100%;
-  min-height: clamp(180px, 28vh, 420px);
-}
-.media img{
-  max-width: 100%;
-  max-height: var(--imgMaxH);
-  width:auto;
-  height:auto;
-  object-fit: contain;
-  display:block;
-  border:0;
-  box-shadow:none;
-}
-
-/* ====== CELULAR EM PÉ (portrait): 1 página grande ====== */
-@media (max-width: 900px) and (orientation: portrait){
-  .spine{ display:none; }
-
-  .fixed-left{ display:none; }
-  .fixed-right{
-    left:0;
-    width:100%;
-    border-top-left-radius: var(--radius);
-    border-bottom-left-radius: var(--radius);
-  }
-
-  .leaf{
-    left:0;
-    width:100%;
-    border-top-left-radius: var(--radius);
-    border-bottom-left-radius: var(--radius);
-  }
-  .leaf .front, .leaf .back{
-    border-top-left-radius: var(--radius);
-    border-bottom-left-radius: var(--radius);
-  }
-
-  .hotspot{ width:38%; }
-  .corner{ display:none; } /* opcional: remove cantos pra não atrapalhar */
-}
-
-/* ====== CELULAR DEITADO (landscape): 2 páginas ====== */
-@media (max-width: 900px) and (orientation: landscape){
-  .spine{ display:block; }
-  .fixed-left{ display:block; }
-
-  .fixed-left{ left:0; width:50%; }
-  .fixed-right{ left:50%; width:50%; }
-
-  .leaf{ left:50%; width:50%; }
-  .corner{ display:block; }
-  .hotspot{ width:30%; }
-}
-
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="hint">Clique/arraste no canto direito para abrir/avançar • esquerdo para voltar (no começo fecha)</div>
+    <div class="hint">Direita: abrir/avançar • Esquerda: voltar (no começo fecha) • Gire o celular</div>
 
-    <div class="book closed" id="book">
+    <div class="book closed spread-mode" id="book">
       <div class="base"></div>
 
       <div class="cover" id="cover">
         <div class="front">
           <div class="cover-title">
             <h1>Bíblia</h1>
-            <p class="sub">Leitura em formato de livro • clique ou arraste para abrir</p>
+            <p class="sub">Leitura em formato de livro • responsivo (celular em pé = 1 página)</p>
             <div class="badge">Toque no canto direito ➜</div>
           </div>
         </div>
@@ -440,7 +381,7 @@ p{ font-size: var(--p); }
       <div class="spread" id="spread">
         <div class="fixed-page fixed-left" id="fixedLeft"></div>
         <div class="fixed-page fixed-right" id="fixedRight"></div>
-        <div class="spine"></div>
+        <div class="spine" id="spine"></div>
         <div id="leaves"></div>
       </div>
 
@@ -453,19 +394,18 @@ p{ font-size: var(--p); }
   </div>
 
   <script>
-    // Páginas (1 direita, 2 esquerda, etc.)
+    // ====== CONTEÚDO ======
+    // page 1 (direita), page 2 (esquerda), etc.
     const PAGES = [
-      { title:"GÊNESIS 1:1",  img:"GENESIS/G1-1.png", imgFull:true },
-      { title:"GÊNESIS 1:2",  img:"GENESIS/G1-2.png", imgFull:true},
-      { title:"GÊNESIS 1:3",  img:"GENESIS/G1-3.png", imgFull:true},
-	  { title:"GÊNESIS 1:4",  img:"GENESIS/G1-4.png", imgFull:true},
-      { title:"GÊNESIS 1:5",  img:"GENESIS/G1-5.png", imgFull:true},
-      { title:"GÊNESIS 1:6",  img:"GENESIS/G1-6.png", imgFull:true},
-      { title:"GÊNESIS 1:7",  img:"GENESIS/G1-7.png", imgFull:true},
-	  { title:"GÊNESIS 1:8",  img:"GENESIS/G1-8.png", imgFull:true},
-	  { title:"GÊNESIS 1:9",  img:"GENESIS/G1-9.png", imgFull:true},
+      { title:"GÊNESIS 1", text:"Versículo 1", img:"GENESIS/G1-1.png" },
+      { title:"GÊNESIS 1", text:"Versículo 2", img:"GENESIS/G1-2.png" },
+      { title:"GÊNESIS 1", text:"Versículo 3", img:"GENESIS/G1-3.png" },
+      { title:"GÊNESIS 1", text:"Versículo 4", img:"GENESIS/G1-4.png" },
+      { title:"Capítulo 5", text:"Página 5 (direita)." },
+      { title:"Capítulo 6", text:"Página 6 (esquerda)." },
     ];
 
+    // ====== ELEMENTOS ======
     const bookEl     = document.getElementById("book");
     const coverEl    = document.getElementById("cover");
     const fixedLeft  = document.getElementById("fixedLeft");
@@ -473,6 +413,23 @@ p{ font-size: var(--p); }
     const leavesEl   = document.getElementById("leaves");
     const nextZone   = document.getElementById("nextZone");
     const prevZone   = document.getElementById("prevZone");
+
+    // ====== ESTADO ======
+    let isOpen = false;
+
+    // pageIndex = página atual (0-based) no modo single
+    // no modo spread usamos rightIndex (sempre aponta para página da direita, ímpar => index par)
+    let pageIndex = 0;
+
+    let mode = "spread"; // "spread" | "single"
+    let leafEls = [];
+    let leaves = []; // estrutura do modo spread
+
+    // drag state
+    let isDragging = false;
+    let dragSide = null; // "next" | "prev"
+    let dragLeaf = null;
+    let startX = 0;
 
     function escapeHtml(str){
       return String(str ?? "")
@@ -494,7 +451,7 @@ p{ font-size: var(--p); }
       if (pageObj?.img) {
         const cap = pageObj.caption ? `<div class="caption">${escapeHtml(pageObj.caption)}</div>` : "";
         media = `
-          <figure class="media ${pageObj.imgFull ? "full" : ""}">
+          <figure class="media">
             <img src="${pageObj.img}" alt="${title}">
             ${cap}
           </figure>
@@ -511,84 +468,160 @@ p{ font-size: var(--p); }
       `;
     }
 
-    // Monta folhas: (ímpar = direita/front) e (par = esquerda/back)
-    const leaves = [];
-    for (let i = 0; i < PAGES.length; i += 2) {
-      leaves.push({
-        odd: PAGES[i],
-        even: PAGES[i+1] || { title:"", text:"" },
-        oddNum: i + 1,
-        evenNum: i + 2
-      });
-    }
-
-    // Render folhas em pilha: a primeira por cima
-    leaves.forEach((lf, idx) => {
-      const z = (leaves.length - idx) + 10; // topo alto
-      const leaf = document.createElement("div");
-      leaf.className = "leaf";
-      leaf.dataset.index = String(idx);
-      leaf.dataset.z = String(z);          // guarda z original
-      leaf.style.zIndex = String(z);
-
-      leaf.innerHTML = `
-        <div class="front">${pageMarkup(lf.odd, lf.oddNum, "right")}</div>
-        <div class="back">${pageMarkup(lf.even, lf.evenNum, "left")}</div>
-      `;
-      leavesEl.appendChild(leaf);
-    });
-
-    const leafEls = Array.from(document.querySelectorAll(".leaf"));
-
-    // ====== ESTADO ======
-    let isOpen = false;
-    let current = 0; // quantas folhas já viraram
-
-    // Drag state
-    let isDragging = false;
-    let dragSide = null; // "next" | "prev"
-    let dragLeaf = null;
-    let startX = 0;
-
     function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
     function setTurning(el, on){ el?.classList.toggle("turning", !!on); }
-
     function setInstantTransform(el, deg){
       el.style.transition = "none";
       el.style.transform = `rotateY(${deg}deg)`;
     }
 
+    // ====== DETECTA MODO RESPONSIVO ======
+    function detectMode(){
+      // celular em pé -> single
+      const portrait = window.matchMedia("(orientation: portrait)").matches;
+      const small = window.matchMedia("(max-width: 900px)").matches;
+      return (portrait && small) ? "single" : "spread";
+    }
+
+    function applyMode(newMode){
+      mode = newMode;
+
+      bookEl.classList.toggle("single-mode", mode === "single");
+      bookEl.classList.toggle("spread-mode", mode === "spread");
+
+      rebuildLeaves();
+      updateFixedPages();
+    }
+
+    // ====== NORMALIZA ÍNDICE ENTRE MODOS ======
+    function getSpreadRightIndexFromAnyIndex(idx){
+      // Em spread, a direita deve ser ímpar => index par (0,2,4...)
+      // Se estiver numa página par (idx ímpar), spread deve mostrar idx (esq) e idx+1 (dir)
+      if (idx % 2 === 0) return idx;
+      return Math.min(idx + 1, (PAGES.length % 2 === 0) ? PAGES.length - 1 : PAGES.length - 1);
+    }
+
+    function getSingleIndexFromSpreadRightIndex(r){
+      // manter o lado direito como "página atual" ao voltar pro single
+      return clamp(r, 0, PAGES.length - 1);
+    }
+
+    // ====== REBUILD (cria folhas conforme modo) ======
+    function rebuildLeaves(){
+      leavesEl.innerHTML = "";
+      leafEls = [];
+      leaves = [];
+
+      if (mode === "spread"){
+        // Ajusta pageIndex -> rightIndex
+        const rightIndex = getSpreadRightIndexFromAnyIndex(pageIndex);
+        const currentLeafIndex = Math.floor(rightIndex / 2);
+
+        // Monta folhas: odd = direita (index par), even = esquerda (index par+1)
+        for (let i = 0; i < PAGES.length; i += 2) {
+          leaves.push({
+            odd:  PAGES[i],
+            even: PAGES[i+1] || { title:"", text:"" },
+            oddNum:  i + 1,
+            evenNum: i + 2,
+          });
+        }
+
+        leaves.forEach((lf, idx) => {
+          const z = (leaves.length - idx) + 10;
+          const leaf = document.createElement("div");
+          leaf.className = "leaf";
+          leaf.dataset.index = String(idx);
+          leaf.dataset.z = String(z);
+          leaf.style.zIndex = String(z);
+
+          leaf.innerHTML = `
+            <div class="front">${pageMarkup(lf.odd, lf.oddNum, "right")}</div>
+            <div class="back">${pageMarkup(lf.even, lf.evenNum, "left")}</div>
+          `;
+          leavesEl.appendChild(leaf);
+          leafEls.push(leaf);
+        });
+
+        // aplica estado (folhas antes da atual viradas)
+        leafEls.forEach((el, idx) => {
+          el.classList.toggle("flipped", idx < currentLeafIndex);
+          // z-index: viradas vão para baixo
+          if (idx < currentLeafIndex) el.style.zIndex = String(1 + idx);
+          else el.style.zIndex = el.dataset.z;
+        });
+
+        // grava pageIndex de volta como rightIndex (modo spread)
+        pageIndex = rightIndex;
+
+      } else {
+        // mode single: 1 folha por página (full width)
+        // cada leaf tem front = página, back = próxima página (pra animação)
+        for (let i = 0; i < PAGES.length; i++) {
+          const z = (PAGES.length - i) + 10;
+          const leaf = document.createElement("div");
+          leaf.className = "leaf";
+          leaf.dataset.index = String(i);
+          leaf.dataset.z = String(z);
+          leaf.style.zIndex = String(z);
+
+          const front = PAGES[i];
+          const back  = PAGES[i+1] || { title:"", text:"" };
+
+          // no single, numeração sempre à direita (um livro tipo kindle)
+          leaf.innerHTML = `
+            <div class="front">${pageMarkup(front, i+1, "right")}</div>
+            <div class="back">${pageMarkup(back, i+2, "right")}</div>
+          `;
+          leavesEl.appendChild(leaf);
+          leafEls.push(leaf);
+        }
+
+        // folhas anteriores viradas
+        leafEls.forEach((el, idx) => {
+          el.classList.toggle("flipped", idx < pageIndex);
+          if (idx < pageIndex) el.style.zIndex = String(1 + idx);
+          else el.style.zIndex = el.dataset.z;
+        });
+      }
+    }
+
+    function restoreLeafZ(el){ el.style.zIndex = el.dataset.z; }
     function sendLeafToBottom(el){
       const idx = Number(el.dataset.index || 0);
       el.style.zIndex = String(1 + idx);
     }
-    function restoreLeafZ(el){
-      el.style.zIndex = el.dataset.z;
-    }
 
+    // ====== FIXED PAGES (o “papel” parado) ======
     function updateFixedPages(){
-      const rightLeaf = leaves[current];
-      const leftLeaf  = leaves[current - 1];
+      if (!isOpen){
+        fixedLeft.innerHTML = "";
+        fixedRight.innerHTML = "";
+        return;
+      }
 
-      fixedRight.innerHTML = rightLeaf
-        ? pageMarkup(rightLeaf.odd, rightLeaf.oddNum, "right")
-        : "";
+      if (mode === "spread"){
+        // pageIndex aqui é rightIndex (0,2,4...)
+        const r = pageIndex;
+        const l = r - 1;
 
-      fixedLeft.innerHTML = leftLeaf
-        ? pageMarkup(leftLeaf.even, leftLeaf.evenNum, "left")
-        : "";
+        fixedRight.innerHTML = (PAGES[r])
+          ? pageMarkup(PAGES[r], r+1, "right")
+          : "";
+
+        fixedLeft.innerHTML = (l >= 0 && PAGES[l])
+          ? pageMarkup(PAGES[l], l+1, "left")
+          : "";
+      } else {
+        // single: 1 página
+        fixedRight.innerHTML = (PAGES[pageIndex])
+          ? pageMarkup(PAGES[pageIndex], pageIndex+1, "right")
+          : "";
+        fixedLeft.innerHTML = "";
+      }
     }
 
-    function canGoNext(){
-      if (!isOpen) return true;            // capa pode abrir
-      return current < leafEls.length;     // folhas restantes
-    }
-
-    // ✅ pode "voltar" sempre que estiver aberto (no começo isso fecha)
-    function canGoPrev(){
-      return isOpen;
-    }
-
+    // ====== CAPA ======
     function openCover(){
       isOpen = true;
       bookEl.classList.remove("closed");
@@ -598,9 +631,9 @@ p{ font-size: var(--p); }
 
     function closeCover(){
       isOpen = false;
-      current = 0;
+      pageIndex = 0;
 
-      // desfaz todas as folhas
+      // reseta folhas
       leafEls.forEach((el) => {
         el.classList.remove("flipped");
         restoreLeafZ(el);
@@ -613,46 +646,91 @@ p{ font-size: var(--p); }
       updateFixedPages();
     }
 
+    // ====== NAVEGAÇÃO (Next/Prev) ======
+    function canGoNext(){
+      if (!isOpen) return true; // abrir capa
+      if (mode === "spread") return pageIndex + 2 <= PAGES.length - 1;
+      return pageIndex + 1 <= PAGES.length - 1;
+    }
+
+    function canGoPrev(){
+      return isOpen; // no começo fecha
+    }
+
     function commitNext(){
       if (!canGoNext()) return;
-      if (!isOpen){ openCover(); return; }
 
-      const lf = leafEls[current];
-      setTurning(lf, true);
-      lf.classList.add("flipped");
-      sendLeafToBottom(lf);
-      window.setTimeout(() => setTurning(lf, false), 220);
+      if (!isOpen){
+        openCover();
+        return;
+      }
 
-      current++;
-      updateFixedPages();
+      if (mode === "spread"){
+        const leafIndex = Math.floor(pageIndex / 2);
+        const lf = leafEls[leafIndex];
+        if (!lf) return;
+
+        setTurning(lf, true);
+        lf.classList.add("flipped");
+        sendLeafToBottom(lf);
+        window.setTimeout(() => setTurning(lf, false), 220);
+
+        pageIndex += 2;
+        updateFixedPages();
+      } else {
+        const lf = leafEls[pageIndex];
+        if (!lf) return;
+
+        setTurning(lf, true);
+        lf.classList.add("flipped");
+        sendLeafToBottom(lf);
+        window.setTimeout(() => setTurning(lf, false), 220);
+
+        pageIndex += 1;
+        updateFixedPages();
+      }
     }
 
     function commitPrev(){
       if (!canGoPrev()) return;
 
-      // ✅ se está no começo, volta e FECHA
-      if (current === 0){
+      // no começo -> fecha
+      if (pageIndex === 0){
         closeCover();
         return;
       }
 
-      const lf = leafEls[current - 1];
-      setTurning(lf, true);
-      lf.classList.remove("flipped");
-      restoreLeafZ(lf);
-      window.setTimeout(() => setTurning(lf, false), 220);
+      if (mode === "spread"){
+        const prevRight = pageIndex - 2;
+        const leafIndex = Math.floor(prevRight / 2);
+        const lf = leafEls[leafIndex];
+        if (!lf) return;
 
-      current--;
-      updateFixedPages();
+        setTurning(lf, true);
+        lf.classList.remove("flipped");
+        restoreLeafZ(lf);
+        window.setTimeout(() => setTurning(lf, false), 220);
+
+        pageIndex -= 2;
+        updateFixedPages();
+      } else {
+        const lf = leafEls[pageIndex - 1];
+        if (!lf) return;
+
+        setTurning(lf, true);
+        lf.classList.remove("flipped");
+        restoreLeafZ(lf);
+        window.setTimeout(() => setTurning(lf, false), 220);
+
+        pageIndex -= 1;
+        updateFixedPages();
+      }
     }
 
-    // Clique
-    nextZone.addEventListener("click", commitNext);
-    prevZone.addEventListener("click", commitPrev);
-
+    // ====== DRAG ======
     function angleFromDrag(dx, side){
-      const halfW = bookEl.getBoundingClientRect().width * 0.5;
-      const progress = clamp(Math.abs(dx) / (halfW * 0.85), 0, 1);
+      const w = bookEl.getBoundingClientRect().width;
+      const progress = clamp(Math.abs(dx) / (w * 0.55), 0, 1);
       const ang = -180 * progress;
       return (side === "next") ? ang : (-180 + 180 * progress);
     }
@@ -665,7 +743,7 @@ p{ font-size: var(--p); }
       dragSide = side;
       startX = e.clientX;
 
-      // ✅ CAPA: abrir (quando fechado) ou fechar (quando aberto e current==0)
+      // capa: abrir ou fechar
       if (side === "next" && !isOpen){
         dragLeaf = coverEl;
         setTurning(dragLeaf, true);
@@ -673,23 +751,41 @@ p{ font-size: var(--p); }
         dragLeaf.setPointerCapture?.(e.pointerId);
         return;
       }
-
-      if (side === "prev" && isOpen && current === 0){
+      if (side === "prev" && isOpen && pageIndex === 0){
         dragLeaf = coverEl;
         setTurning(dragLeaf, true);
-        setInstantTransform(dragLeaf, -180); // capa já aberta
+        setInstantTransform(dragLeaf, -180);
         dragLeaf.setPointerCapture?.(e.pointerId);
         return;
       }
 
       // folhas
-      dragLeaf = (side === "next") ? leafEls[current] : leafEls[current - 1];
-      setTurning(dragLeaf, true);
+      if (mode === "spread"){
+        if (side === "next"){
+          const leafIndex = Math.floor(pageIndex / 2);
+          dragLeaf = leafEls[leafIndex];
+          setTurning(dragLeaf, true);
+          setInstantTransform(dragLeaf, 0);
+        } else {
+          const prevRight = pageIndex - 2;
+          const leafIndex = Math.floor(prevRight / 2);
+          dragLeaf = leafEls[leafIndex];
+          setTurning(dragLeaf, true);
+          setInstantTransform(dragLeaf, -180);
+        }
+      } else {
+        if (side === "next"){
+          dragLeaf = leafEls[pageIndex];
+          setTurning(dragLeaf, true);
+          setInstantTransform(dragLeaf, 0);
+        } else {
+          dragLeaf = leafEls[pageIndex - 1];
+          setTurning(dragLeaf, true);
+          setInstantTransform(dragLeaf, -180);
+        }
+      }
 
-      const initialDeg = (side === "next") ? 0 : -180;
-      setInstantTransform(dragLeaf, initialDeg);
-
-      dragLeaf.setPointerCapture?.(e.pointerId);
+      dragLeaf?.setPointerCapture?.(e.pointerId);
     }
 
     function pointerMove(e){
@@ -703,19 +799,18 @@ p{ font-size: var(--p); }
       if (!isDragging || !dragLeaf) return;
 
       const dx = e.clientX - startX;
-      const halfW = bookEl.getBoundingClientRect().width * 0.5;
-      const threshold = halfW * 0.25;
+      const w = bookEl.getBoundingClientRect().width;
+      const threshold = w * 0.18;
 
       dragLeaf.style.transition = "";
 
-      // ✅ capa (abrir/fechar)
+      // capa
       if (dragLeaf === coverEl){
         if (!isOpen) {
           if (dx < -threshold) openCover();
         } else {
           if (dx > threshold) closeCover();
         }
-
         dragLeaf.style.transform = "";
         window.setTimeout(() => {
           setTurning(dragLeaf, false);
@@ -725,27 +820,30 @@ p{ font-size: var(--p); }
       }
 
       // folhas
-      if (dragSide === "next") {
-        if (dx < -threshold) {
+      if (dragSide === "next"){
+        if (dx < -threshold){
           dragLeaf.style.transform = "";
           dragLeaf.classList.add("flipped");
           sendLeafToBottom(dragLeaf);
-          current++;
+
+          if (mode === "spread") pageIndex += 2;
+          else pageIndex += 1;
+
           updateFixedPages();
         } else {
           dragLeaf.style.transform = "";
         }
       } else {
-        if (dx > threshold) {
-          if (current === 0){
-            closeCover();
-          } else {
-            dragLeaf.style.transform = "";
-            dragLeaf.classList.remove("flipped");
-            restoreLeafZ(dragLeaf);
-            current--;
-            updateFixedPages();
-          }
+        if (dx > threshold){
+          // se no começo, fecha (mas aqui pageIndex>0 pois capa já tratada)
+          dragLeaf.style.transform = "";
+          dragLeaf.classList.remove("flipped");
+          restoreLeafZ(dragLeaf);
+
+          if (mode === "spread") pageIndex -= 2;
+          else pageIndex -= 1;
+
+          updateFixedPages();
         } else {
           dragLeaf.style.transform = "";
           dragLeaf.classList.add("flipped");
@@ -758,17 +856,53 @@ p{ font-size: var(--p); }
       }, 220);
     }
 
+    nextZone.addEventListener("click", commitNext);
+    prevZone.addEventListener("click", commitPrev);
+
     nextZone.addEventListener("pointerdown", (e) => pointerDown(e, "next"));
     prevZone.addEventListener("pointerdown", (e) => pointerDown(e, "prev"));
     window.addEventListener("pointermove", pointerMove);
     window.addEventListener("pointerup", pointerUp);
 
-    // Teclado
     window.addEventListener("keydown", (e) => {
       if (e.key === "ArrowRight") commitNext();
       if (e.key === "ArrowLeft") commitPrev();
     });
 
+    // ====== RESPONSIVO AO GIRAR ======
+    function refreshLayout(){
+      const newMode = detectMode();
+      if (newMode !== mode){
+        // preserva posição ao trocar modo
+        if (mode === "spread"){
+          // pageIndex era rightIndex
+          pageIndex = getSingleIndexFromSpreadRightIndex(pageIndex);
+        } else {
+          // pageIndex era single
+          pageIndex = getSpreadRightIndexFromAnyIndex(pageIndex);
+        }
+        applyMode(newMode);
+      } else {
+        // só recalcula medidas / conteúdo
+        rebuildLeaves();
+        updateFixedPages();
+      }
+
+      // ajuda em alguns celulares (reflow)
+      bookEl.style.transform = "translateZ(0)";
+      requestAnimationFrame(() => { bookEl.style.transform = ""; });
+    }
+
+    window.addEventListener("resize", () => {
+      clearTimeout(window.__bookResizeT);
+      window.__bookResizeT = setTimeout(refreshLayout, 120);
+    });
+    window.addEventListener("orientationchange", () => {
+      setTimeout(refreshLayout, 250);
+    });
+
+    // INIT
+    applyMode(detectMode());
     updateFixedPages();
   </script>
 </body>
